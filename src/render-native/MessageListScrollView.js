@@ -1,28 +1,15 @@
 /* @flow */
 import React, { PureComponent } from 'react';
 
-import type { Actions, TypingState, Narrow } from '../types';
+import type { Props } from '../message/MessageListContainer';
 import { nullFunction } from '../nullObjects';
 import { LoadingIndicator } from '../common';
 import MessageTyping from './MessageTyping';
 import InfiniteScrollView from './InfiniteScrollView';
 import cachedMessageRender from './cachedMessageRender';
+import MessageListLoading from '../message/MessageListLoading';
 
-type Props = {
-  actions: Actions,
-  fetchingOlder: boolean,
-  fetchingNewer: boolean,
-  singleFetchProgress?: boolean,
-  renderedMessages: Object[],
-  anchor?: number,
-  narrow?: Narrow,
-  typingUsers?: TypingState,
-  listRef?: (component: any) => void,
-  onReplySelect: () => void,
-  onScroll: (e: Event) => void,
-};
-
-export default class MessageList extends PureComponent<Props> {
+export default class MessageListScrollView extends PureComponent<Props> {
   props: Props;
 
   static contextTypes = {
@@ -39,9 +26,8 @@ export default class MessageList extends PureComponent<Props> {
     const {
       anchor,
       actions,
-      fetchingOlder,
-      fetchingNewer,
-      singleFetchProgress,
+      showMessagePlaceholders,
+      fetching,
       listRef,
       onReplySelect,
       onScroll,
@@ -49,6 +35,10 @@ export default class MessageList extends PureComponent<Props> {
       renderedMessages,
       narrow,
     } = this.props;
+
+    if (showMessagePlaceholders) {
+      return <MessageListLoading />;
+    }
 
     const { messageList, stickyHeaderIndices } = cachedMessageRender(
       renderedMessages,
@@ -67,10 +57,9 @@ export default class MessageList extends PureComponent<Props> {
         narrow={narrow}
         anchor={anchor}
       >
-        <LoadingIndicator active={fetchingOlder} backgroundColor={styles.backgroundColor} />
+        <LoadingIndicator active={fetching.older} backgroundColor={styles.backgroundColor} />
         {messageList}
-        {!singleFetchProgress &&
-          fetchingNewer && <LoadingIndicator active backgroundColor={styles.backgroundColor} />}
+        {fetching.newer && <LoadingIndicator active backgroundColor={styles.backgroundColor} />}
         {typingUsers && <MessageTyping users={typingUsers} actions={actions} />}
       </InfiniteScrollView>
     );

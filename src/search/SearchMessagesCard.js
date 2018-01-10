@@ -1,4 +1,4 @@
-/* @flow */
+/* @noflow */
 import React, { PureComponent } from 'react';
 import { StyleSheet, View } from 'react-native';
 import throttle from 'lodash.throttle';
@@ -7,7 +7,7 @@ import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import type { Actions, Auth, Message } from '../types';
 import { SearchEmptyState } from '../common';
 import { searchNarrow } from '../utils/narrow';
-import MessageList from '../render-native/MessageList';
+import MessageList from '../render-native/MessageListScrollView';
 import { getMessages } from '../api';
 import renderMessages from '../message/renderMessages';
 
@@ -84,9 +84,6 @@ export default class SearchMessagesCard extends PureComponent<Props, State> {
             renderedMessages={renderedMessages}
             fetchingOlder={isFetching}
             fetchingNewer={isFetching}
-            caughtUpOlder
-            caughtUpNewer
-            singleFetchProgress
           />
         </ActionSheetProvider>
       </View>

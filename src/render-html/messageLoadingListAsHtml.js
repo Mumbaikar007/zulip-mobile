@@ -1,13 +1,14 @@
 import messageLoadingAsHtml from './messageLoadingAsHtml';
 
-export default isFetching =>
-  isFetching
-    ? [
-        messageLoadingAsHtml(),
-        messageLoadingAsHtml(),
-        messageLoadingAsHtml(),
-        messageLoadingAsHtml(),
-        messageLoadingAsHtml(),
-        messageLoadingAsHtml(),
-      ]
-    : [];
+export default `
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+${messageLoadingAsHtml}
+`;

@@ -7,14 +7,13 @@ import type { Message, Narrow } from '../types';
 import { KeyboardAvoider, OfflineNotice } from '../common';
 
 import MessageListContainer from '../message/MessageListContainer';
-import MessageListLoading from '../message/MessageListLoading';
 import NoMessages from '../message/NoMessages';
 import ComposeBoxContainer from '../compose/ComposeBoxContainer';
-import UnreadNoticeContainer from './UnreadNoticeContainer';
+import UnreadNotice from './UnreadNotice';
 
 type Props = {
   narrow: Narrow,
-  isFetching: boolean,
+  showMessagePlaceholders: boolean,
   isOnline: boolean,
   noMessages: boolean,
   lastMessage: Message,
@@ -57,27 +56,23 @@ export default class Chat extends PureComponent<Props> {
 
   render() {
     const { styles } = this.context;
-    const { isFetching, narrow, isOnline, noMessages } = this.props;
-    const showMessagePlaceholders = noMessages && isFetching;
+    const { showMessagePlaceholders } = this.props;
 
     return (
       <KeyboardAvoider style={styles.flexed} behavior="padding">
         <ActionSheetProvider>
           <View style={styles.flexed}>
-            {!isOnline && <OfflineNotice />}
-            {noMessages && !isFetching && <NoMessages narrow={narrow} />}
-            {showMessagePlaceholders && <MessageListLoading />}
-            {!noMessages && (
-              <ActionSheetProvider>
-                <MessageListContainer
-                  onReplySelect={this.handleReplySelect}
-                  listRef={component => {
-                    this.listComponent = component || this.listComponent;
-                  }}
-                />
-              </ActionSheetProvider>
-            )}
-            <UnreadNoticeContainer />
+            <OfflineNotice />
+            <UnreadNotice />
+            <NoMessages />
+            <ActionSheetProvider>
+              <MessageListContainer
+                onReplySelect={this.handleReplySelect}
+                listRef={component => {
+                  this.listComponent = component || this.listComponent;
+                }}
+              />
+            </ActionSheetProvider>
             {!showMessagePlaceholders && (
               <ComposeBoxContainer
                 messageInputRef={(component: any) => {

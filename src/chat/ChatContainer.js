@@ -2,18 +2,17 @@
 import connectWithActions from '../connectWithActions';
 import {
   getActiveNarrow,
-  getIsFetching,
   getIfNoMessages,
+  getShowMessagePlaceholders,
   getLastMessageInActiveNarrow,
   getOwnEmail,
 } from '../selectors';
 import Chat from './Chat';
 
 export default connectWithActions(state => ({
-  isOnline: state.app.isOnline,
-  isFetching: getIsFetching(state),
+  lastMessage: getLastMessageInActiveNarrow(state),
   narrow: getActiveNarrow(state),
   noMessages: getIfNoMessages(state),
   ownEmail: getOwnEmail(state),
-  lastMessage: getLastMessageInActiveNarrow(state),
+  showMessagePlaceholders: getShowMessagePlaceholders(state),
 }))(Chat);

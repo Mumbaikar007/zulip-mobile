@@ -1,31 +1,23 @@
 /* @flow */
-import type { Actions, Auth, Narrow, TypingState } from '../types';
+import isEqual from 'lodash.isequal';
+
+import type { Props } from '../message/MessageListContainer';
 import renderMessagesAsHtml from './renderMessagesAsHtml';
 import messageTypingAsHtml from './messageTypingAsHtml';
-
-type Props = {
-  actions: Actions,
-  auth: Auth,
-  fetchingOlder: boolean,
-  fetchingNewer: boolean,
-  singleFetchProgress?: boolean,
-  renderedMessages: Object[],
-  anchor: number,
-  narrow?: Narrow,
-  typingUsers?: TypingState,
-};
 
 let previousContent = '';
 
 export default (prevProps: Props, nextProps: Props, sendMessage: any => void) => {
   if (
-    prevProps.fetchingOlder !== nextProps.fetchingOlder ||
-    prevProps.fetchingNewer !== nextProps.fetchingNewer
+    prevProps.fetching.older !== nextProps.fetching.older ||
+    prevProps.fetching.newer !== nextProps.fetching.newer ||
+    prevProps.showMessagePlaceholders !== nextProps.showMessagePlaceholders
   ) {
     sendMessage({
       type: 'fetching',
-      fetchingOlder: nextProps.fetchingOlder,
-      fetchingNewer: nextProps.fetchingNewer,
+      showMessagePlaceholders: nextProps.isFetching,
+      fetchingOlder: nextProps.fetching.older,
+      fetchingNewer: nextProps.fetching.newer,
     });
   }
 
@@ -36,7 +28,7 @@ export default (prevProps: Props, nextProps: Props, sendMessage: any => void) =>
       previousContent = content;
       sendMessage({
         type: 'content',
-        anchor: nextProps.anchor,
+        anchor: isEqual(prevProps.narrow, nextProps.narrow) ? 0 : nextProps.anchor,
         content,
       });
     }

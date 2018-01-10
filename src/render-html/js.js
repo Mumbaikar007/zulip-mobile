@@ -1,96 +1,141 @@
-/* eslint-disable func-names, no-alert, prefer-template, no-var, prefer-arrow-callback,
-  space-before-function-paren */
-export default `
-window.onerror = function(message, source, line, column, error) {
-  alert(
-    [
-      'Message: ' + message,
-      'Source: ' + source,
-      'Line: ' + line,
-      'Column: ' + column,
-      'Error object: ' + JSON.stringify(error),
-    ].join(' - '),
-  );
+window.onerror = (message, source, line, column, error) => {
+  const obj = JSON.stringify(error);
+  const errorStr = [
+    `Message: ${message}<br>`,
+    `Line: ${line}:${column}<br>`,
+    `Error: ${obj}<br>`,
+  ].join('');
+  document.getElementById('js-error').innerHTML = errorStr;
+
   return false;
 };
 
-var height = document.body.clientHeight;
+const documentBody = document.body;
+const elementMessageList = document.getElementById('message-list');
+const elementSpinnerOlder = document.getElementById('spinner-older');
+const elementSpinnerNewer = document.getElementById('spinner-newer');
+const elementTyping = document.getElementById('typing');
+const elementMessageLoading = document.getElementById('message-loading');
 
-function sendMessage(msg) {
-  window.postMessage(JSON.stringify(msg), '*');
+if (
+  !documentBody ||
+  !elementMessageList ||
+  !elementSpinnerOlder ||
+  !elementSpinnerNewer ||
+  !elementTyping ||
+  !elementMessageLoading
+) {
+  throw new Error('HTML elements missing');
 }
 
-function getMessageNode(node) {
-  var curNode = node;
+const sendMessage = msg => {
+  window.postMessage(JSON.stringify(msg), '*');
+};
+
+const getMessageNode = node => {
+  let curNode = node;
   while (curNode && curNode.parentNode && curNode.parentNode.id !== 'message-list') {
     curNode = curNode.parentNode;
   }
   return curNode;
-}
+};
 
-function getMessageIdFromNode(node) {
-  var msgNode = getMessageNode(node);
-  if (!msgNode) {
-    console.log('!!!! WHOA', msgNode);
-  }
+const getMessageIdFromNode = node => {
+  const msgNode = getMessageNode(node);
   return msgNode && msgNode.getAttribute('data-msg-id');
-}
+};
 
-function scrollToBottom() {
-  window.scrollTo(0, document.body.scrollHeight);
-}
+const animatedScrollTo = (element, to, duration) => {
+  if (duration <= 0) return;
+  const difference = to - element.scrollTop;
+  const perTick = difference / duration * 10;
 
-function scrollToBottomIfNearEnd() {
-  if (document.body.scrollHeight - 100 < document.body.scrollTop + document.body.clientHeight) {
+  setTimeout(() => {
+    element.scrollTop += perTick;
+    if (element.scrollTop === to) return;
+    window.scrollTo(element, to, duration - 10);
+  }, 10);
+};
+
+const animatedScrollBy = (element, by, duration) => {
+  const step = by / (duration / 16);
+  let cur = Math.abs(by);
+  const interval = setInterval(() => {
+    cur -= step;
+    window.scrollBy(0, step);
+    if (cur <= 0) clearInterval(interval);
+  }, 16);
+};
+
+const scrollToBottom = () => {
+  window.scrollTo(0, documentBody.scrollHeight);
+};
+
+const scrollToBottomIfNearEnd = () => {
+  if (documentBody.scrollHeight - 100 < documentBody.scrollTop + documentBody.clientHeight) {
     scrollToBottom();
   }
-}
+};
 
-function scrollToAnchor(anchor) {
-  var anchorNode = document.getElementById('msg-' + anchor);
+const scrollToAnchor = anchor => {
+  const anchorNode = document.getElementById(`msg-${anchor}`);
   if (anchorNode) {
     anchorNode.scrollIntoView(false);
   } else {
     scrollToBottom();
   }
-}
+};
 
-window.addEventListener('resize', function(event) {
-  var difference = height - document.body.clientHeight;
+let height = documentBody.clientHeight;
+window.addEventListener('resize', event => {
+  const difference = height - documentBody.clientHeight;
   if (
     difference > 0 ||
-    document.body.scrollHeight !== document.body.scrollTop + document.body.clientHeight
+    documentBody.scrollHeight !== documentBody.scrollTop + documentBody.clientHeight
   ) {
     window.scrollBy(0, difference);
   }
-  height = document.body.clientHeight;
+  height = documentBody.clientHeight;
 });
 
-document.addEventListener('message', function(e) {
+document.addEventListener('message', e => {
   const msg = JSON.parse(e.data);
   switch (msg.type) {
     case 'bottom':
       scrollToBottom();
       break;
-    case 'content':
-      document.getElementById('message-list').innerHTML = msg.content;
-      scrollToAnchor(msg.anchor);
+    case 'content': {
+      const prevPosition = documentBody.scrollTop;
+      elementMessageList.innerHTML = msg.content;
+      if (msg.anchor) {
+        scrollToAnchor(msg.anchor);
+      } else {
+        documentBody.scrollTop = prevPosition;
+      }
       break;
+    }
     case 'fetching':
-      document.getElementById('spinner-older').classList.toggle('hidden', !msg.fetchingOlder);
-      document.getElementById('spinner-newer').classList.toggle('hidden', !msg.fetchingNewer);
+      elementMessageLoading.classList.toggle('hidden', !msg.showMessagePlaceholders);
+      elementSpinnerOlder.classList.toggle(
+        'hidden',
+        !msg.fetchingOlder || msg.showMessagePlaceholders,
+      );
+      elementSpinnerNewer.classList.toggle(
+        'hidden',
+        !msg.fetchingNewer || msg.showMessagePlaceholders,
+      );
       break;
     case 'typing':
-      document.getElementById('typing').innerHTML = msg.content;
+      elementTyping.innerHTML = msg.content;
       setTimeout(() => scrollToBottomIfNearEnd());
       break;
     default:
   }
 });
 
-window.addEventListener('scroll', function() {
-  var startNode = getMessageNode(document.elementFromPoint(200, 20));
-  var endNode = getMessageNode(document.elementFromPoint(200, window.innerHeight - 50));
+window.addEventListener('scroll', () => {
+  const startNode = getMessageNode(document.elementFromPoint(200, 20));
+  const endNode = getMessageNode(document.elementFromPoint(200, window.innerHeight - 50));
   console.log(startNode, endNode);
 
   window.postMessage(
@@ -98,21 +143,13 @@ window.addEventListener('scroll', function() {
       type: 'scroll',
       scrollY: window.scrollY,
       innerHeight: window.innerHeight,
-      offsetHeight: document.body.offsetHeight,
+      offsetHeight: documentBody.offsetHeight,
     }),
     '*',
   );
 });
 
-document.body.addEventListener('click', function(e) {
-  sendMessage({
-    type: 'click',
-    target: e.target,
-    targetNodeName: e.target.nodeName,
-    targetClassName: e.target.className,
-    matches: e.target.matches('a[target="_blank"] > img'),
-  });
-
+documentBody.addEventListener('click', e => {
   if (e.target.matches('.avatar-img')) {
     sendMessage({
       type: 'avatar',
@@ -140,6 +177,7 @@ document.body.addEventListener('click', function(e) {
       href: e.target.getAttribute('href'),
       messageId: +getMessageIdFromNode(e.target),
     });
+    e.preventDefault();
   }
 
   if (e.target.matches('.reaction')) {
@@ -150,7 +188,4 @@ document.body.addEventListener('click', function(e) {
       voted: e.target.classList.contains('self-voted'),
     });
   }
-
-  return false;
 });
-`;

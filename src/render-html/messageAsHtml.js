@@ -2,28 +2,28 @@ import { shortTime } from '../utils/date';
 import messageTagsAsHtml from './messageTagsAsHtml';
 import messageReactionListAsHtml from './messageReactionListAsHtml';
 
-const briefMessageAsHtml = ({
-  id,
-  content,
-  timeEdited,
-  isOutbox,
-  isStarred,
-  reactions,
-  ownEmail,
-}) => `
-  <div class="message message-brief" id="msg-${id}" data-msg-id="${id}">
-    <div class="avatar"><img></div>
-    <div class="content">
-      ${content}
-      ${messageTagsAsHtml(timeEdited, isOutbox, isStarred)}
-      ${messageReactionListAsHtml(reactions, id, ownEmail)}
-    </div>
+const messageDiv = (id, msgClass, flags) =>
+  `<div
+     class="message ${msgClass}"
+     id="msg-${id}"
+     data-msg-id="${id}"
+     ${flags.map(flag => `data-${flag}="true" `).join('')}
+    >`;
+
+const briefMessageAsHtml = ({ id, content, flags, timeEdited, isOutbox, reactions, ownEmail }) => `
+${messageDiv(id, 'message-brief', flags)}
+  <div class="content">
+    ${content}
+    ${messageTagsAsHtml(flags, timeEdited, isOutbox)}
+    ${messageReactionListAsHtml(reactions, id, ownEmail)}
   </div>
+</div>
 `;
 
 const fullMessageAsHtml = ({
   id,
   content,
+  flags,
   fromName,
   fromEmail,
   timestamp,
@@ -34,25 +34,26 @@ const fullMessageAsHtml = ({
   isStarred,
   reactions,
   ownEmail,
+  isMentioned,
 }) => `
-  <div class="message message-full" id="msg-${id}" data-msg-id="${id}">
-    <div class="avatar">
-      <img src="${avatarUrl}" class="avatar-img" data-email="${fromEmail}">
-    </div>
-    <div class="content">
-      <div class="subheader">
-        <div class="username">
-          ${fromName}
-        </div>
-        <div class="timestamp">
-          ${shortTime(timestamp * 1000, twentyFourHourTime)}
-        </div>
-      </div>
-      ${content}
-      ${messageTagsAsHtml(timeEdited, isOutbox, isStarred)}
-      ${messageReactionListAsHtml(reactions, id, ownEmail)}
-    </div>
+${messageDiv(id, 'message-full', flags)}
+  <div class="avatar">
+    <img src="${avatarUrl}" class="avatar-img" data-email="${fromEmail}">
   </div>
+  <div class="content">
+    <div class="subheader">
+      <div class="username">
+        ${fromName}
+      </div>
+      <div class="timestamp">
+        ${shortTime(timestamp * 1000, twentyFourHourTime)}
+      </div>
+    </div>
+    ${content}
+    ${messageTagsAsHtml(flags, timeEdited, isOutbox)}
+    ${messageReactionListAsHtml(reactions, id, ownEmail)}
+  </div>
+</div>
 `;
 
 export default ({ isBrief, ...rest }) =>
